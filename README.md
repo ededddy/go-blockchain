@@ -1,16 +1,17 @@
 # This Project follows the following tutorial
 
-- Currently on Blockchain in Go Part 4
+- Currently on Blockchain in Go Part 6
 - You can find links for whole tutorial [here](https://github.com/practical-tutorials/project-based-learning#go)
 
-# Repo created at midway of Part 4
+## Repo created at midway of Part 4
+- Created this to learn go and implementation of block chain, base58 algorithms I yoinked it.
 
 # TODOS
 
 - [x] Send crypto to other address
 - [x] Private key addresses
 - [x] Wallets
-- [ ] Transaction Signature
+- [x] Transaction Signature
 - [ ] Expand each block's max transactions record (currently: 1 / block)
 - [ ] Improve transaction (e.g. Rewards, Merkle Tree)
 - [ ] Networking
