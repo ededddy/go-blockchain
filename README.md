@@ -29,3 +29,5 @@ Usage:
   printchain - print all the blocks of the blockchain
   send -from FROM -to TO -amount AMOUNT - Send AMOUNT of coins from FROM address to TO
 ```
+# Commit Log
+- All of them is me, my ssh setup is weird and I am testing it
