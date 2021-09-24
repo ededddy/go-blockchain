@@ -4,3 +4,4 @@
 ./*.app
 ./main
 ./blockchain_go
+./*.dat
