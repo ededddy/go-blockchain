@@ -8,14 +8,16 @@
 # TODOS
 
 - [x] Send crypto to other address
-- [ ] Private key addresses
+- [x] Private key addresses
+- [x] Wallets
+- [ ] Transaction Signature
 - [ ] Expand each block's max transactions record (currently: 1 / block)
 - [ ] Improve transaction (e.g. Rewards, Merkle Tree)
 - [ ] Networking
 
 # Build this noob app
 ```
-$ go build -o blockchain_go .
+$ go build -o blockchain_go *.go
 ```
 
 # Run after building

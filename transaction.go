@@ -19,17 +19,6 @@ type Transaction struct {
 	Vout []TXOutput
 }
 
-type TXOutput struct {
-	Value        int
-	ScriptPubKey string
-}
-
-type TXInput struct {
-	Txid      []byte
-	Vout      int
-	ScriptSig string
-}
-
 func (tx *Transaction) SetID() {
 	var encoded bytes.Buffer
 	var hash [32]byte
@@ -48,9 +37,9 @@ func NewCoinbaseTX(to, data string) *Transaction {
 		data = fmt.Sprintf("Reward to '%s'", to)
 	}
 
-	txin := TXInput{[]byte{}, -1, data}
-	txout := TXOutput{subsidy, to}
-	tx := Transaction{nil, []TXInput{txin}, []TXOutput{txout}}
+	txin := TXInput{[]byte{}, -1, nil, []byte(data)}
+	txout := NewTXOutput(subsidy, to)
+	tx := Transaction{nil, []TXInput{txin}, []TXOutput{*txout}}
 
 	tx.SetID()
 	return &tx
@@ -61,46 +50,45 @@ func (tx Transaction) IsCoinbase() bool {
 	return len(tx.Vin) == 1 && len(tx.Vin[0].Txid) == 0 && tx.Vin[0].Vout == -1
 }
 
-func (in *TXInput) CanUnlockOutputWith(unlockingData string) bool {
-	return in.ScriptSig == unlockingData
-}
-
-func (out *TXOutput) CanBeUnlockedWith(unlockingData string) bool {
-	return out.ScriptPubKey == unlockingData
-}
-
 // NewUTXOTransaction creates a new transaction
-func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) *Transaction{
-  var inputs []TXInput
-  var outputs []TXOutput
+func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) *Transaction {
+	var inputs []TXInput
+	var outputs []TXOutput
 
-  acc, validOutputs := bc.FindSpendableOutputs(from, amount)
+	wallets, err := NewWallets()
+	if err != nil {
+		log.Panic(err)
+	}
+	wallet := wallets.GetWallet(from)
+	pubKeyHash := HashPubKey(wallet.PublicKey)
 
-  if acc < amount {
-    log.Panic("ERROR: Not enough funds")
-  }
+	acc, validOutputs := bc.FindSpendableOutputs(pubKeyHash, amount)
 
-  // Build a list of inputs
-  for txid, outs := range validOutputs {
-    txID, err := hex.DecodeString(txid)
-    if err != nil {
-      log.Panic(err)
-    }
-    for _, out := range outs {
-      input := TXInput{txID, out, from}
-      inputs = append(inputs, input)
-    }
-  }
+	if acc < amount {
+		log.Panic("ERROR: Not enough funds")
+	}
 
-  // Build a list of outputs
-  outputs = append(outputs, TXOutput{amount, to})
-  if acc > amount {
-    outputs = append(outputs, TXOutput{acc-amount ,from})
-    // a change
-  }
+	// Build a list of inputs
+	for txid, outs := range validOutputs {
+		txID, err := hex.DecodeString(txid)
+		if err != nil {
+			log.Panic(err)
+		}
+		for _, out := range outs {
+			input := TXInput{txID, out, nil, wallet.PublicKey}
+			inputs = append(inputs, input)
+		}
+	}
 
-  tx := Transaction{nil, inputs, outputs}
-  tx.SetID()
+	// Build a list of outputs
+	outputs = append(outputs, *NewTXOutput(amount, to))
+	if acc > amount {
+		outputs = append(outputs, *NewTXOutput(acc-amount, from))
+		// a change
+	}
 
-  return &tx
+	tx := Transaction{nil, inputs, outputs}
+	tx.SetID()
+
+	return &tx
 }
