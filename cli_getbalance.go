@@ -2,9 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
 )
 
 func (cli *CLI) getBalance(address string) {
+	if !ValidateAddress(address) {
+		log.Panic("ERROR: Invalid Address")
+	}
 	bc := NewBlockchain(address)
 	defer bc.db.Close()
 

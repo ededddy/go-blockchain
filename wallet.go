@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
-	"golang.org/x/crypto/ripemd160"
 	"log"
+
+	"golang.org/x/crypto/ripemd160"
 )
 
 const (
@@ -61,6 +63,19 @@ func HashPubKey(pubKey []byte) []byte {
 	publicRIPEMD160 := RIPEMD160Hasher.Sum(nil)
 
 	return publicRIPEMD160
+}
+
+// ValidateAddress check if address is valid
+func ValidateAddress(address string) bool {
+	// recover the public key hash
+	pubKeyHash := Base58Decode([]byte(address))
+	// extract checksum & version
+	actualChecksum := pubKeyHash[len(pubKeyHash)-addressChecksumLen:]
+	version := pubKeyHash[0]
+	pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-addressChecksumLen]
+	targetChecksum := checksum(append([]byte{version}, pubKeyHash...))
+	// compare
+	return bytes.Compare(targetChecksum, actualChecksum) == 0
 }
 
 func checksum(payload []byte) []byte {

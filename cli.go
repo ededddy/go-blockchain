@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 )
 
 type CLI struct{}
@@ -16,42 +15,7 @@ func (cli *CLI) printUsage() {
 	fmt.Println("  printchain - print all the blocks of the blockchain")
 	fmt.Println("  send -from FROM -to TO -amount AMOUNT - Send AMOUNT of coins from FROM address to TO")
 	fmt.Println("  createwallet - Generate a new key-pair and saves it into wallet file")
-}
-
-func (cli *CLI) send(from, to string, amount int) {
-	bc := NewBlockchain(from)
-	defer bc.db.Close()
-
-	tx := NewUTXOTransaction(from, to, amount, bc)
-	bc.MineBlock([]*Transaction{tx})
-	fmt.Println("Success!")
-}
-
-func (cli *CLI) createBlockchain(address string) {
-	bc := CreateBlockchain(address)
-	bc.db.Close()
-	fmt.Println("Done!")
-}
-
-func (cli *CLI) printChain() {
-	bc := NewBlockchain("")
-	defer bc.db.Close()
-
-	bci := bc.Iterator()
-
-	for {
-		block := bci.Next()
-
-		fmt.Printf("Prev. hash: %x\n", block.PrevBlockHash)
-		fmt.Printf("Hash: %x\n", block.Hash)
-		pow := NewProofOfWork(block)
-		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
-		fmt.Println()
-
-		if len(block.PrevBlockHash) == 0 {
-			break
-		}
-	}
+	fmt.Println("  listaddress - List all addresses from the wallet file")
 }
 
 func (cli *CLI) validateArgs() {
@@ -69,6 +33,7 @@ func (cli *CLI) Run() {
 	getBalanceCmd := flag.NewFlagSet("getbalance", flag.ExitOnError)
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
 	createWalletCmd := flag.NewFlagSet("createwallet", flag.ExitOnError)
+	listAddressCmd := flag.NewFlagSet("listaddress", flag.ExitOnError)
 
 	getBalanceAddress := getBalanceCmd.String("address", "", "The address to get balance for")
 	createBlockchainAddress := createBlockchainCmd.String("address", "", "The address to send genesis block reward to")
@@ -77,6 +42,11 @@ func (cli *CLI) Run() {
 	sendAmount := sendCmd.Int("amount", 0, "Amount to send")
 
 	switch os.Args[1] {
+	case "listaddress":
+		err := listAddressCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panic(err)
+		}
 	case "createwallet":
 		err := createWalletCmd.Parse(os.Args[2:])
 		if err != nil {
@@ -135,5 +105,9 @@ func (cli *CLI) Run() {
 	}
 	if createWalletCmd.Parsed() {
 		cli.createWallet()
+	}
+
+	if listAddressCmd.Parsed() {
+		cli.listAddress()
 	}
 }
